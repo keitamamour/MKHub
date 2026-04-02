@@ -1,5 +1,5 @@
 -- ========================================
--- MK HUB FINAL (PC + MOBILE)
+-- MK HUB - FULL AUTO AIM (PC + MOBILE)
 -- Auteur : Keitamamour
 -- ========================================
 
@@ -23,9 +23,7 @@ local function getClosestPlayer()
         if plr ~= player then
             local char = plr.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
-                
                 local dist = (char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-                
                 if dist < shortest then
                     shortest = dist
                     closest = char
@@ -43,7 +41,7 @@ gui.ResetOnSpawn = false
 gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 150)
+frame.Size = UDim2.new(0, 220, 0, 160)
 frame.Position = UDim2.new(0, 50, 0, 100)
 frame.BackgroundColor3 = Color3.fromRGB(15,15,15)
 frame.Active = true
@@ -75,7 +73,6 @@ switchBtn.TextScaled = true
 -- 🔘 ON / OFF
 toggle.MouseButton1Click:Connect(function()
     aiming = not aiming
-
     if aiming then
         lockedTarget = getClosestPlayer()
         toggle.Text = "AIM: ON"
@@ -100,24 +97,28 @@ end)
 -- 🎯 AUTO AIM + AUTO ATTACK (PC + MOBILE)
 RunService.RenderStepped:Connect(function()
     if aiming then
-        
+        -- Lock cible
         if not lockedTarget or not lockedTarget:FindFirstChild("HumanoidRootPart") then
             lockedTarget = getClosestPlayer()
         end
 
         if lockedTarget then
-            local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
             local targetRoot = lockedTarget.HumanoidRootPart
-            
+
             if myRoot and targetRoot then
-                
-                -- 🔥 Auto attaque universelle (PC + Mobile)
+                -- Smooth aim assist (camera vers cible)
+                local cam = workspace.CurrentCamera
+                cam.CFrame = cam.CFrame:Lerp(
+                    CFrame.new(cam.CFrame.Position, targetRoot.Position),
+                    0.2
+                )
+
+                -- 🔥 Auto attaque universelle (Tool)
                 local tool = player.Character:FindFirstChildOfClass("Tool")
                 if tool then
                     tool:Activate()
                 end
-
-                print("TARGET:", lockedTarget.Name)
             end
         end
     end
