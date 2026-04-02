@@ -1,5 +1,5 @@
 -- ========================================
--- MK HUB - Player Aim System
+-- MK HUB FINAL (PC + MOBILE)
 -- Auteur : Keitamamour
 -- ========================================
 
@@ -19,12 +19,17 @@ local function getClosestPlayer()
     local closest = nil
     local shortest = math.huge
 
-    for _, plr in pairs(game.Players:GetPlayers()) do
-        if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
-            local dist = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                closest = plr.Character
+    for _, plr in ipairs(game.Players:GetPlayers()) do
+        if plr ~= player then
+            local char = plr.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                
+                local dist = (char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                
+                if dist < shortest then
+                    shortest = dist
+                    closest = char
+                end
             end
         end
     end
@@ -35,10 +40,10 @@ end
 -- 🧱 GUI
 local gui = Instance.new("ScreenGui")
 gui.ResetOnSpawn = false
-gui.Parent = player.PlayerGui
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 200, 0, 120)
+frame.Size = UDim2.new(0, 200, 0, 150)
 frame.Position = UDim2.new(0, 50, 0, 100)
 frame.BackgroundColor3 = Color3.fromRGB(15,15,15)
 frame.Active = true
@@ -53,13 +58,21 @@ title.TextScaled = true
 
 local toggle = Instance.new("TextButton", frame)
 toggle.Size = UDim2.new(1, -20, 0, 40)
-toggle.Position = UDim2.new(0, 10, 0, 50)
+toggle.Position = UDim2.new(0, 10, 0, 40)
 toggle.Text = "AIM: OFF"
 toggle.BackgroundColor3 = Color3.fromRGB(30,30,30)
 toggle.TextColor3 = Color3.fromRGB(255,255,255)
 toggle.TextScaled = true
 
--- 🔘 Bouton ON/OFF
+local switchBtn = Instance.new("TextButton", frame)
+switchBtn.Size = UDim2.new(1, -20, 0, 40)
+switchBtn.Position = UDim2.new(0, 10, 0, 90)
+switchBtn.Text = "CHANGE TARGET"
+switchBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+switchBtn.TextColor3 = Color3.fromRGB(255,255,255)
+switchBtn.TextScaled = true
+
+-- 🔘 ON / OFF
 toggle.MouseButton1Click:Connect(function()
     aiming = not aiming
 
@@ -72,26 +85,40 @@ toggle.MouseButton1Click:Connect(function()
     end
 end)
 
--- ⌨️ Changer cible (Q)
+-- 🔄 bouton mobile changer cible
+switchBtn.MouseButton1Click:Connect(function()
+    lockedTarget = getClosestPlayer()
+end)
+
+-- ⌨️ touche PC changer cible
 UIS.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.Q then
         lockedTarget = getClosestPlayer()
     end
 end)
 
--- 🎯 Auto aim (attaque seulement, pas caméra)
+-- 🎯 AUTO AIM + AUTO ATTACK (PC + MOBILE)
 RunService.RenderStepped:Connect(function()
-    if aiming and lockedTarget and lockedTarget:FindFirstChild("HumanoidRootPart") then
+    if aiming then
         
-        local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
-        local targetRoot = lockedTarget.HumanoidRootPart
-        
-        if myRoot and targetRoot then
-            local direction = (targetRoot.Position - myRoot.Position).Unit
+        if not lockedTarget or not lockedTarget:FindFirstChild("HumanoidRootPart") then
+            lockedTarget = getClosestPlayer()
+        end
 
-            -- ⚡ ADAPTE ICI TON SYSTEME D'ATTAQUE
-            -- Exemple :
-            -- game.ReplicatedStorage.AttackEvent:FireServer(direction)
+        if lockedTarget then
+            local myRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+            local targetRoot = lockedTarget.HumanoidRootPart
+            
+            if myRoot and targetRoot then
+                
+                -- 🔥 Auto attaque universelle (PC + Mobile)
+                local tool = player.Character:FindFirstChildOfClass("Tool")
+                if tool then
+                    tool:Activate()
+                end
+
+                print("TARGET:", lockedTarget.Name)
+            end
         end
     end
 end)
