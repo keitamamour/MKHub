@@ -1,145 +1,115 @@
 -- ========================================
--- MK HUB ULTRA AUTO FARM
--- Auteur : Keitamamour
+-- MK HUB PRO (STYLE REDZ MAIS CLEAN)
 -- ========================================
 
 local player = game.Players.LocalPlayer
 repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 
-local UIS = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
+local event = game.ReplicatedStorage:WaitForChild("AttackEvent")
 
-local farming = false
-local autoKatakuri = false
-local autoFruit = false
+-- STATES
+local farm = false
+local boss = false
+local fruit = false
 
--- GUI
-local gui = Instance.new("ScreenGui")
-gui.Parent = player:WaitForChild("PlayerGui")
+-- 🔴 BOUTON LOGO MK
+local gui = Instance.new("ScreenGui", player.PlayerGui)
 gui.ResetOnSpawn = false
 
+local open = false
+
+local logo = Instance.new("TextButton", gui)
+logo.Size = UDim2.new(0,60,0,60)
+logo.Position = UDim2.new(0,20,0,200)
+logo.Text = "MK"
+logo.BackgroundColor3 = Color3.fromRGB(0,0,0)
+logo.TextColor3 = Color3.fromRGB(255,0,0)
+logo.TextScaled = true
+
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,250,0,220)
-frame.Position = UDim2.new(0,50,0,100)
+frame.Size = UDim2.new(0,220,0,200)
+frame.Position = UDim2.new(0,100,0,150)
 frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+frame.Visible = false
 frame.Active = true
 frame.Draggable = true
 
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1,0,0,30)
-title.Text = "MK HUB ULTRA"
-title.TextColor3 = Color3.fromRGB(255,0,0)
-title.TextScaled = true
-title.BackgroundTransparency = 1
-
--- Boutons
-local toggleFarm = Instance.new("TextButton", frame)
-toggleFarm.Size = UDim2.new(1,-20,0,40)
-toggleFarm.Position = UDim2.new(0,10,0,40)
-toggleFarm.Text = "AUTO FARM: OFF"
-toggleFarm.TextScaled = true
-
-local toggleKatakuri = Instance.new("TextButton", frame)
-toggleKatakuri.Size = UDim2.new(1,-20,0,40)
-toggleKatakuri.Position = UDim2.new(0,10,0,90)
-toggleKatakuri.Text = "AUTO KATAKURI: OFF"
-toggleKatakuri.TextScaled = true
-
-local toggleFruit = Instance.new("TextButton", frame)
-toggleFruit.Size = UDim2.new(1,-20,0,40)
-toggleFruit.Position = UDim2.new(0,10,0,140)
-toggleFruit.Text = "AUTO FRUIT: OFF"
-toggleFruit.TextScaled = true
-
--- 🔘 Boutons toggle
-toggleFarm.MouseButton1Click:Connect(function()
-    farming = not farming
-    toggleFarm.Text = farming and "AUTO FARM: ON" or "AUTO FARM: OFF"
+logo.MouseButton1Click:Connect(function()
+    open = not open
+    frame.Visible = open
 end)
 
-toggleKatakuri.MouseButton1Click:Connect(function()
-    autoKatakuri = not autoKatakuri
-    toggleKatakuri.Text = autoKatakuri and "AUTO KATAKURI: ON" or "AUTO KATAKURI: OFF"
-end)
+-- BOUTONS
+local function makeButton(name, posY, callback)
+    local b = Instance.new("TextButton", frame)
+    b.Size = UDim2.new(1,-20,0,40)
+    b.Position = UDim2.new(0,10,0,posY)
+    b.Text = name.." OFF"
+    b.TextScaled = true
 
-toggleFruit.MouseButton1Click:Connect(function()
-    autoFruit = not autoFruit
-    toggleFruit.Text = autoFruit and "AUTO FRUIT: ON" or "AUTO FRUIT: OFF"
-end)
-
--- 🔍 Functions
-local function getClosestMob()
-    local closest = nil
-    local shortest = math.huge
-
-    for _, mob in pairs(workspace:GetDescendants()) do
-        if mob:IsA("Model") and mob:FindFirstChild("Humanoid") and mob:FindFirstChild("HumanoidRootPart") and mob ~= player.Character then
-            local dist = (mob.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                closest = mob
-            end
-        end
-    end
-
-    return closest
+    local state = false
+    b.MouseButton1Click:Connect(function()
+        state = not state
+        b.Text = name .. (state and " ON" or " OFF")
+        callback(state)
+    end)
 end
 
-local function getKatakuriMob()
-    for _, mob in pairs(workspace:GetDescendants()) do
-        if mob:IsA("Model") and mob.Name:lower():find("katakuri") and mob:FindFirstChild("HumanoidRootPart") then
-            return mob
+makeButton("AUTO FARM", 10, function(v) farm = v end)
+makeButton("AUTO BOSS", 60, function(v) boss = v end)
+makeButton("AUTO FRUIT", 110, function(v) fruit = v end)
+
+-- 🔍 FUNCTIONS
+local function getMob()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:FindFirstChild("Humanoid") and v ~= player.Character then
+            return v
         end
     end
 end
 
-local function getClosestFruit()
-    local closest = nil
-    local shortest = math.huge
-    for _, fruit in pairs(workspace:GetDescendants()) do
-        if fruit:IsA("Part") and fruit.Name:lower():find("fruit") then
-            local dist = (fruit.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            if dist < shortest then
-                shortest = dist
-                closest = fruit
-            end
+local function getBoss()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name:lower():find("katakuri") and v:FindFirstChild("Humanoid") then
+            return v
         end
     end
-    return closest
 end
 
--- 🔄 Loop Auto Farm
+local function getFruit()
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v.Name:lower():find("fruit") then
+            return v
+        end
+    end
+end
+
+-- 🔄 LOOP
 RunService.RenderStepped:Connect(function()
-    local myRoot = player.Character:FindFirstChild("HumanoidRootPart")
-    if not myRoot then return end
+    local root = player.Character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
 
-    -- Auto Katakuri
-    if autoKatakuri then
-        local kat = getKatakuriMob()
-        if kat then
-            local targetRoot = kat.HumanoidRootPart
-            myRoot.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0,0,3))
-            local tool = player.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
-        end
-    end
-
-    -- Auto Fruit
-    if autoFruit then
-        local fruit = getClosestFruit()
-        if fruit then
-            myRoot.CFrame = CFrame.new(fruit.Position + Vector3.new(0,3,0))
-        end
-    end
-
-    -- Auto Farm Mob normal
-    if farming then
-        local mob = getClosestMob()
+    if farm then
+        local mob = getMob()
         if mob then
-            local targetRoot = mob.HumanoidRootPart
-            myRoot.CFrame = CFrame.new(targetRoot.Position + Vector3.new(0,0,3))
-            local tool = player.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
+            root.CFrame = mob.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+            event:FireServer(mob)
+        end
+    end
+
+    if boss then
+        local b = getBoss()
+        if b then
+            root.CFrame = b.HumanoidRootPart.CFrame * CFrame.new(0,0,3)
+            event:FireServer(b)
+        end
+    end
+
+    if fruit then
+        local f = getFruit()
+        if f then
+            root.CFrame = f.CFrame
         end
     end
 end)
