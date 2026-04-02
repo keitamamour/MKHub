@@ -1,10 +1,10 @@
 -- ========================================
--- MK HUB - Auto Aim / Aimbot System
+-- MK HUB - Auto Aim sur joueurs
 -- Auteur : Keitamamour
 -- ========================================
 
 local player = game.Players.LocalPlayer
-local camera = workspace.CurrentCamera
+repeat wait() until player.Character and player.Character:FindFirstChild("HumanoidRootPart")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 
@@ -14,7 +14,7 @@ print("MK LOADED ✅")
 local aiming = false
 local lockedTarget = nil
 
--- Trouver le player le plus proche
+-- ========== FONCTION POUR TROUVER LE JOUEUR LE PLUS PROCHE ==========
 local function getClosestPlayer()
     local closest = nil
     local shortestDistance = math.huge
@@ -23,9 +23,7 @@ local function getClosestPlayer()
         if plr.Character 
         and plr.Character:FindFirstChild("HumanoidRootPart") 
         and plr ~= player then
-
             local distance = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
-            
             if distance < shortestDistance then
                 shortestDistance = distance
                 closest = plr.Character
@@ -38,6 +36,7 @@ end
 
 -- ========== CREATION DU BOUTON MK ==========
 local screenGui = Instance.new("ScreenGui")
+screenGui.ResetOnSpawn = false
 screenGui.Parent = player:WaitForChild("PlayerGui")
 
 local btn = Instance.new("TextButton")
@@ -52,7 +51,7 @@ btn.Parent = screenGui
 btn.MouseButton1Click:Connect(function()
     aiming = not aiming
     if aiming then
-        lockedTarget = getClosestEnemy()
+        lockedTarget = getClosestPlayer()
         btn.Text = "MK ON"
     else
         lockedTarget = nil
@@ -63,13 +62,25 @@ end)
 -- ========== LOCK CIBLE AVEC TOUCHE Q ==========
 UIS.InputBegan:Connect(function(input, gameProcessed)
     if input.KeyCode == Enum.KeyCode.Q then
-        lockedTarget = getClosestEnemy()
+        lockedTarget = getClosestPlayer()
     end
 end)
 
--- ========== BOUCLE AUTO-AIM ==========
+-- ========== BOUCLE AUTO-AIM POUR ATTAQUES ==========
 RunService.RenderStepped:Connect(function()
     if aiming and lockedTarget and lockedTarget:FindFirstChild("HumanoidRootPart") then
-        camera.CFrame = CFrame.new(camera.CFrame.Position, lockedTarget.HumanoidRootPart.Position)
+        local playerRoot = player.Character and player.Character:FindFirstChild("HumanoidRootPart")
+        local targetRoot = lockedTarget.HumanoidRootPart
+
+        if playerRoot and targetRoot then
+            local direction = (targetRoot.Position - playerRoot.Position).Unit
+
+            -- 🔥 ADAPTE ICI SELON TON JEU
+            -- Si tu utilises un RemoteEvent pour attaquer :
+            -- game.ReplicatedStorage.FireEvent:FireServer(direction)
+            
+            -- Si tu utilises un outil / projectile :
+            -- projectile.Velocity = direction * speed
+        end
     end
 end)
