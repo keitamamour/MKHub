@@ -1,5 +1,5 @@
 -- ========================================
--- MK HUB - FULL AUTO AIM (PC + MOBILE)
+-- MK HUB FINAL - CAMERA LIBRE
 -- Auteur : Keitamamour
 -- ========================================
 
@@ -23,7 +23,9 @@ local function getClosestPlayer()
         if plr ~= player then
             local char = plr.Character
             if char and char:FindFirstChild("HumanoidRootPart") then
+                
                 local dist = (char.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+                
                 if dist < shortest then
                     shortest = dist
                     closest = char
@@ -73,6 +75,7 @@ switchBtn.TextScaled = true
 -- 🔘 ON / OFF
 toggle.MouseButton1Click:Connect(function()
     aiming = not aiming
+
     if aiming then
         lockedTarget = getClosestPlayer()
         toggle.Text = "AIM: ON"
@@ -94,10 +97,11 @@ UIS.InputBegan:Connect(function(input)
     end
 end)
 
--- 🎯 AUTO AIM + AUTO ATTACK (PC + MOBILE)
+-- 🎯 AUTO AIM (CAMERA LIBRE) + AUTO ATTACK
 RunService.RenderStepped:Connect(function()
     if aiming then
-        -- Lock cible
+        
+        -- lock automatique
         if not lockedTarget or not lockedTarget:FindFirstChild("HumanoidRootPart") then
             lockedTarget = getClosestPlayer()
         end
@@ -107,18 +111,18 @@ RunService.RenderStepped:Connect(function()
             local targetRoot = lockedTarget.HumanoidRootPart
 
             if myRoot and targetRoot then
-                -- Smooth aim assist (camera vers cible)
-                local cam = workspace.CurrentCamera
-                cam.CFrame = cam.CFrame:Lerp(
-                    CFrame.new(cam.CFrame.Position, targetRoot.Position),
-                    0.2
-                )
+                
+                -- 🎯 direction vers cible (sans caméra)
+                local direction = (targetRoot.Position - myRoot.Position).Unit
 
-                -- 🔥 Auto attaque universelle (Tool)
+                -- 🔥 attaque universelle (PC + mobile)
                 local tool = player.Character:FindFirstChildOfClass("Tool")
                 if tool then
                     tool:Activate()
                 end
+
+                -- debug
+                print("TARGET:", lockedTarget.Name)
             end
         end
     end
