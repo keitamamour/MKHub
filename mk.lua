@@ -14,17 +14,21 @@ print("MK LOADED ✅")
 local aiming = false
 local lockedTarget = nil
 
--- Trouver l’ennemi le plus proche
-local function getClosestEnemy()
+-- Trouver le player le plus proche
+local function getClosestPlayer()
     local closest = nil
     local shortestDistance = math.huge
 
-    for _, enemy in pairs(workspace:WaitForChild("Enemies"):GetChildren()) do
-        if enemy:FindFirstChild("HumanoidRootPart") then
-            local distance = (enemy.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr.Character 
+        and plr.Character:FindFirstChild("HumanoidRootPart") 
+        and plr ~= player then
+
+            local distance = (plr.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            
             if distance < shortestDistance then
                 shortestDistance = distance
-                closest = enemy
+                closest = plr.Character
             end
         end
     end
